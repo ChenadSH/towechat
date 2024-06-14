@@ -311,11 +311,14 @@ install_or_update_python_env
 # Before launching our PY script, set any vars it needs to know
 # Pass all of the command line args, so they can be handled by the PY script.
 # Note that USER can be empty string on some systems when running as root. This is fixed in the PY installer.
-USERNAME=${USER} || $(whoami)
+
+if [ ${USER} ]; then
+    USERNAME=${USER}
+else
+    USERNAME=$(whoami)
+fi
+log_info ${USERNAME}
 USER_HOME=${HOME}
-
-
-echo ${USERNAME}
 log_info ${HOME}
 CMD_LINE_ARGS=${@}
 PY_LAUNCH_JSON="{\"OE_REPO_DIR\":\"${OE_REPO_DIR}\",\"OE_ENV\":\"${OE_ENV}\",\"USERNAME\":\"${USERNAME}\",\"USER_HOME\":\"${USER_HOME}\",\"CMD_LINE_ARGS\":\"${CMD_LINE_ARGS}\"}"
