@@ -1,0 +1,350 @@
+#!/bin/bash
+
+# Set this to terminate on error.
+set -e
+
+#
+# First things first, we need to detect what kind of OS we are running on. The script works by default with all
+# Debian OSs, but some printers with embedded computers run strange embedded OSs, that have a lot of restrictions.
+# These must stay in sync with update.sh and uninstall.sh!
+#
+
+# The K1 and K1 Max run an OS called Buildroot. We detect that by looking at the os-release file.
+# Quick note about bash vars, to support all OSs, we use the most compilable var version. This means we use ints
+# where 1 is true and 0 is false, and we use comparisons like this [[ $IS_K1_OS -eq 1 ]]
+IS_K1_OS=0
+if grep -Fqs "ID=buildroot" /etc/os-release
+then
+    IS_K1_OS=1
+    # On the K1, we always want the path to be /usr/data
+    # /usr/share has very limited space, so we don't want to use it.
+    # This is also where the github script installs moonraker and everything.
+    HOME="/usr/data"
+fi
+
+# Next, we try to detect if this OS is the Sonic Pad OS.
+# The Sonic Pad runs openwrt. We detect that by looking at the os-release file.
+IS_SONIC_PAD_OS=0
+if grep -Fqs "sonic" /etc/openwrt_release
+then
+    IS_SONIC_PAD_OS=1
+    # On the K1, we always want the path to be /usr/share, this is where the rest of the klipper stuff is.
+    HOME="/usr/share"
+fi
+
+# 这段代码的主要作用是确定两个重要的路径：
+# 脚本执行的根目录和 Python 虚拟环境的根目录，
+# 并将这两个路径分别存储在 OE_REPO_DIR 和 OE_ENV 这两个变量中。
+# Get the root path of the repo, aka, where this script is executing
+OE_REPO_DIR=$(readlink -f $(dirname "$0"))
+
+# This is the root of where our py virtual env will be. Note that all towechat instances share this same
+# virtual environment. This how the rest of the system is, where all other services, even with multiple instances, share the same
+# virtual environment. I probably wouldn't have done it like this, but we have to create this before we know what instance we are targeting, so it's fine.
+OE_ENV="${HOME}/towechat-env"
+
+
+# Note that this is parsed by the update process to find and update required system packages on update!
+# On update THIS SCRIPT ISN'T RAN, only this line is parsed out and used to install / update system packages.
+# For python packages, the `requirements.txt` package is used on update.
+# This var name MUST BE `PKGLIST`!!
+#
+# Note! This was deprecated in newer versions of moonraker, instead the deps are in the moonraker-system-dependencies.json file.
+# For now we will keep both around AND IN SYNC so we can support older versions of moonraker.
+#
+# The python requirements are for the installer and plugin
+# The virtualenv is for our virtual package env we create
+# The curl requirement is for some things in this bootstrap script.
+# python3-venv is required for the virtualenv command to fully work.
+# This must stay in sync with the dockerfile package installs
+PKGLIST="python3 python3-pip virtualenv python3-venv curl"
+# For the Creality OS, we only need to install these.
+# We don't override the default name, since that's used by the Moonraker installer
+# Note that we DON'T want to use the same name as above (not even in this comment) because some parsers might find it.
+# Note we exclude virtualenv python3-venv curl because they can't be installed on the sonic pad via the package manager.
+CREALITY_DEP_LIST="python3 python3-pip python3-pillow"
+SONIC_PAD_DEP_LIST="python3 python3-pip"
+
+
+
+#
+# Console Write Helpers
+#
+c_default=$(echo -en "\e[39m")
+c_green=$(echo -en "\e[92m")
+c_yellow=$(echo -en "\e[93m")
+c_magenta=$(echo -en "\e[35m")
+c_red=$(echo -en "\e[91m")
+c_cyan=$(echo -en "\e[96m")
+
+log_header()
+{
+    echo -e "${c_magenta}$1${c_default}"
+}
+
+log_important()
+{
+    echo -e "${c_yellow}$1${c_default}"
+}
+
+log_error()
+{
+    log_blank
+    echo -e "${c_red}$1${c_default}"
+    log_blank
+}
+
+log_info()
+{
+    echo -e "${c_green}$1${c_default}"
+}
+
+log_blue()
+{
+    echo -e "${c_cyan}$1${c_default}"
+}
+
+log_blank()
+{
+    echo ""
+}
+
+
+#
+# It's important for consistency that the repo root is in set $HOME for the K1 and Sonic Pad
+# To enforce that, we will move the repo where it should be.
+ensure_creality_os_right_repo_path()
+{
+    # TODO - re-enable this for the  || [[ $IS_K1_OS -eq 1 ]] after the github script updates.
+    if [[ $IS_SONIC_PAD_OS -eq 1 ]]
+    then
+        # Due to the K1 shell, we have to use grep rather than any bash string contains syntax.
+        if echo $OE_REPO_DIR |grep "$HOME" - > /dev/null
+        then
+            return
+        else
+            log_info "Current path $OE_REPO_DIR"
+            log_error "For the Creality devices the towechat repo must be cloned into $HOME/towechat"
+            log_important "Moving the repo and running the install again..."
+            cd $HOME
+            # Send errors to null, if the folder already exists this will fail.
+            git clone https://github.com/chenadSH/towechat towechat 2>/dev/null || true
+            cd $HOME/towechat
+            # Ensure state
+            git reset --hard
+            git checkout master
+            git pull
+            # Run the install, if it fails, still do the clean-up of this repo.
+            if [[ $IS_K1_OS -eq 1 ]]
+            then
+                sh ./install.sh "$@" || true
+            else
+                ./install.sh "$@" || true
+            fi
+            installExit=$?
+            # Delete this folder.
+            rm -fr $OE_REPO_DIR
+            # Take the user back to the new install folder.
+            cd $HOME
+            # Exit.
+            exit $installExit
+        fi
+    fi
+}
+
+
+
+#
+# Logic to create / update our virtual py env
+#
+ensure_py_venv()
+{
+    log_header "Checking Python Virtual Environment For towechat..."
+    # If the service is already running, we can't recreate the virtual env so if it exists, don't try to create it.
+    # Note that we check the bin folder exists in the path, since we mkdir the folder below but virtualenv might fail and leave it empty.
+    OE_ENV_BIN_PATH="$OE_ENV/bin"
+    if [ -d $OE_ENV_BIN_PATH ]; then
+        # This virtual env refresh fails on some devices when the service is already running, so skip it for now.
+        # This only refreshes the virtual environment package anyways, so it's not super needed.
+        #log_info "Virtual environment found, updating to the latest version of python."
+        #python3 -m venv --upgrade "${OE_ENV}"
+        return 0
+    fi
+
+    log_info "No virtual environment found, creating one now."
+    mkdir -p "${OE_ENV}"
+    if [[ $IS_K1_OS -eq 1 ]]
+    then
+        # The K1 requires we setup the virtualenv like this.
+        # --system-site-packages is important for the K1, since it doesn't have much disk space.
+        # Ideally we use /opt/bin/python3, since that version of python will be updated over time.
+        # It installs with the opkg command, if opkg is there.
+        # If not, we will use the version of python built into the system for the existing Creality stuff.
+        if [[ -f /opt/bin/python3 ]]
+        then
+            virtualenv -p /opt/bin/python3 --system-site-packages "${OE_ENV}"
+        else
+            python3 /usr/lib/python3.8/site-packages/virtualenv.py -p /usr/bin/python3 --system-site-packages "${OE_ENV}"
+        fi
+    else
+        # Everything else can use this more modern style command.
+        # We don't want to use --system-site-packages, so we don't consume whatever packages are on the system.
+        virtualenv -p /usr/bin/python3 "${OE_ENV}"
+    fi
+}
+
+
+
+#
+# Logic to make sure all of our required system packages are installed.
+#
+install_or_update_system_dependencies()
+{
+    log_header "Checking required system packages are installed..."
+
+    if [[ $IS_K1_OS -eq 1 ]]
+    then
+        # The K1 by default doesn't have any package manager. In some cases
+        # the user might install opkg via the 3rd party moonraker installer script.
+        # But in general, PY will already be installed.
+        # We will try to update python from the package manager if possible, otherwise, we will ignore it.
+        if [[ -f /opt/bin/opkg ]]
+        then
+            opkg update || true
+            opkg install ${CREALITY_DEP_LIST} || true
+        fi
+        # On the K1, the only we thing we ensure is that virtualenv is installed via pip.
+        # We have had users report issues where this install gets stuck, using the no cache dir flag seems to fix it.
+        # 5/14/24 - The trusted hosts had to be added to fix a cert issue with pypi we aren't sure why it started happening all of the sudden.
+        pip3 install -q --trusted-host pypi.python.org --trusted-host pypi.org --trusted-host=files.pythonhosted.org --no-cache-dir virtualenv
+    elif [[ $IS_SONIC_PAD_OS -eq 1 ]]
+    then
+        # The sonic pad always has opkg installed, so we can make sure these packages are installed.
+        # We have had users report issues where this install gets stuck, using the no cache dir flag seems to fix it.
+        opkg update || true
+        opkg install ${SONIC_PAD_DEP_LIST} || true
+        pip3 install -q --no-cache-dir virtualenv
+    else
+        # It seems a lot of printer control systems don't have the date and time set correctly, and then the fail
+        # getting packages and other downstream things. We will will use our HTTP API to set the current UTC time.
+        # Note that since cloudflare will auto force http -> https, we use https, but ignore cert errors, that could be
+        # caused by an incorrect date.
+        # Note some companion systems don't have curl installed, so this will fail.
+        log_info "Ensuring the system date and time is correct..."
+        sudo date -s `curl --insecure 'https://h5.dayanweb.cn/h5/date.php' 2>/dev/null` || true
+
+        # These we require to be installed in the OS.
+        # Note we need to do this before we create our virtual environment
+        log_important "You might be asked for your system password - this is required to install the required system packages."
+        log_info "Installing required system packages..."
+        sudo apt update 1>/dev/null` 2>/dev/null` || true
+        sudo apt install --yes ${PKGLIST}
+
+        # The PY lib Pillow depends on some system packages that change names depending on the OS.
+        # The easiest way to do this was just to try to install them and ignore errors.
+        # Most systems already have the packages installed, so this only fixes edge cases.
+        # Notes on Pillow deps: https://pillow.readthedocs.io/en/latest/installation.html
+        log_info "Ensuring zlib is install for Pillow, it's ok if this package install fails."
+        sudo apt install --yes zlib1g-dev 2> /dev/null || true
+        sudo apt install --yes zlib-devel 2> /dev/null || true
+        sudo apt install --yes python-imaging 2> /dev/null || true
+        sudo apt install --yes python3-pil 2> /dev/null || true
+        sudo apt install --yes python3-pillow 2> /dev/null || true
+    fi
+
+    log_info "System package install complete."
+}
+
+
+#
+# Logic to install or update the virtual env and all of our required packages.
+#
+install_or_update_python_env()
+{
+    # Now, ensure the virtual environment is created.
+    ensure_py_venv
+
+    # Update pip if needed - we added a note because this takes a while on the sonic pad.
+    log_info "Updating PIP if needed... (this can take a few seconds or so)"
+    if [[ $IS_K1_OS -eq 1 ]]
+    then
+        "${OE_ENV}"/bin/python -m pip install --trusted-host pypi.python.org --trusted-host pypi.org --trusted-host=files.pythonhosted.org --no-cache-dir --upgrade pip
+    else
+        "${OE_ENV}"/bin/python -m pip install --upgrade pip
+    fi
+
+    # Finally, ensure our plugin requirements are installed and updated.
+    log_info "Installing or updating required python libs..."
+    if [[ $IS_K1_OS -eq 1 ]]
+    then
+        "${OE_ENV}"/bin/pip3 install --trusted-host pypi.python.org --trusted-host pypi.org --trusted-host=files.pythonhosted.org --require-virtualenv --no-cache-dir -q -r "${OE_REPO_DIR}"/requirements.txt
+    else
+        "${OE_ENV}"/bin/pip3 install --require-virtualenv --no-cache-dir -q -r "${OE_REPO_DIR}"/requirements.txt
+    fi
+    log_info "Python libs installed."
+}
+
+
+# These are helpful for debugging.
+if [[ $IS_SONIC_PAD_OS -eq 1 ]]
+then
+    echo "Running in Sonic Pad OS mode"
+fi
+if [[ $IS_K1_OS -eq 1 ]]
+then
+    echo "Running in K1 and K1 Max OS mode"
+fi
+
+
+
+# Before anything, make sure this repo is cloned into the correct path on Creality OS devices.
+# If this is Creality OS and the path is wrong, it will re-clone the repo, run the install again, and exit.
+ensure_creality_os_right_repo_path
+
+# Next, make sure our required system packages are installed.
+# These are required for other actions in this script, so it must be done first.
+install_or_update_system_dependencies
+
+# Now make sure the virtual env exists, is updated, and all of our currently required PY packages are updated.
+install_or_update_python_env
+
+# Before launching our PY script, set any vars it needs to know
+# Pass all of the command line args, so they can be handled by the PY script.
+# Note that USER can be empty string on some systems when running as root. This is fixed in the PY installer.
+USERNAME=${USER}
+USER_HOME=${HOME}
+CMD_LINE_ARGS=${@}
+PY_LAUNCH_JSON="{\"OE_REPO_DIR\":\"${OE_REPO_DIR}\",\"OE_ENV\":\"${OE_ENV}\",\"USERNAME\":\"${USERNAME}\",\"USER_HOME\":\"${USER_HOME}\",\"CMD_LINE_ARGS\":\"${CMD_LINE_ARGS}\"}"
+log_info "Bootstrap done. Starting python installer..."
+
+
+# Now launch into our py setup script, that does everything else required.
+# Since we use a module for file includes, we need to set the path to the root of the module
+# so python will find it.
+export PYTHONPATH="${OE_REPO_DIR}"
+
+# We can't use pushd on Creality OS, so do this.
+CURRENT_DIR=${pwd}
+cd ${OE_REPO_DIR} > /dev/null
+
+# Disable the PY cache files (-B), since they will be written as sudo, since that's what we launch the PY
+# installer as. The PY installer must be sudo to write the service files, but we don't want the
+# complied files to stay in the repo with sudo permissions.
+if [[ $IS_SONIC_PAD_OS -eq 1 ]] || [[ $IS_K1_OS -eq 1 ]]
+then
+    # Creality OS only has a root user and we can't use sudo.
+    ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
+else
+    sudo ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
+fi
+
+cd ${CURRENT_DIR} > /dev/null
+
+# Check the output of the py script.
+retVal=$?
+if [ $retVal -ne 0 ]; then
+    log_error "Failed to complete setup. Error Code: ${retVal}"
+fi
+
+# Note the rest of the user flow (and terminal info) is done by the PY script, so we don't need to report anything else.
+exit $retVal
