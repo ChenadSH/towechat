@@ -44,6 +44,10 @@ class Discovery:
         elif context.OsType == OsTypes.K1:
             # For the K1 and K1 max, we know exactly where the files are, so we don't need to do a lot of searching.
             pairList = self._K1FindAllServiceFilesAndPairings(context)
+        elif context.OsType == OsTypes.Debian:
+            # For the Debian
+            print('device is Debian')
+            pairList = self._FindDebianServiceFilesAndPairings(context)
         else:
             # To start, we will enumerate all moonraker service files we can find and their possible moonraker config parings.
             # For details about why we need these, read the readme.py file in this module.
@@ -115,6 +119,34 @@ class Discovery:
         return
 
 
+    # Note this must return the same result list as _CrealityOsFindAllServiceFilesAndPairings
+    def _FindDebianServiceFilesAndPairings(self) -> list:
+        # Look for any service file that matches moonraker*.service.
+        # For simple installs, there will be one file called moonraker.service.
+        # For more complex setups, we assume it will use the kiauh naming system, of moonraker-<name or number>.service
+        serviceFiles = self._FindAllFiles(Paths.DebianSystemdServiceFilePath, "moonraker", ".service")
+
+        # Based on the possible service files, see what moonraker config files we can match.
+        results = []
+        for f in serviceFiles:
+            # Try to find a matching moonraker config file, based off the service file.
+            moonrakerConfigPath = self._TryToFindMatchingMoonrakerConfig(f)
+            print(moonrakerConfigPath)
+            if moonrakerConfigPath is None:
+                Logger.Debug(f"Moonraker config file not found for service file [{f}]")
+                try:
+                    with open(f, "r", encoding="utf-8") as serviceFile:
+                        lines = serviceFile.readlines()
+                        for l in lines:
+                            Logger.Debug(l)
+                except Exception:
+                    pass
+            else:
+                Logger.Debug(f"Moonraker service [{f}] matched to [{moonrakerConfigPath}]")
+                # Only return fully matched pairs
+                # Pair the service file and the moonraker config file path.
+                results.append(ServiceFileConfigPathPair(os.path.basename(f), moonrakerConfigPath))
+        return results
     # Note this must return the same result list as _CrealityOsFindAllServiceFilesAndPairings
     def _FindAllServiceFilesAndPairings(self) -> list:
         # Look for any service file that matches moonraker*.service.
