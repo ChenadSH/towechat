@@ -6,7 +6,8 @@ class Paths:
     SystemdServiceFilePath = "/etc/systemd/system"
     
     # For Debian
-    DebianSystemdServiceFilePath = "/printer/towechat/kiauh"
+    # DebianSystemdServiceFilePath = "/printer/kiauh"
+    DebianSystemdServiceFilePath = "/printer"
     
     # For the Creality OS, the service path is different.
     # The OS is based on WRT, so it's not Debian.
