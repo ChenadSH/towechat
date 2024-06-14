@@ -12,7 +12,7 @@ class Ffmpeg:
     def TryToInstallFfmpeg(context:Context):
 
         # We don't even try installing ffmpeg on K1 or SonicPad.
-        if context.OsType == OsTypes.K1 or context.OsType == OsTypes.SonicPad:
+        if context.OsType == OsTypes.Debian or context.OsType == OsTypes.K1 or context.OsType == OsTypes.SonicPad:
             return
 
         # Try to install or upgrade.

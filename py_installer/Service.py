@@ -93,6 +93,7 @@ class Service:
 
         Logger.Info("Registering service...")
         Util.RunShellCommand("systemctl enable "+context.ServiceName)
+        print('systemctl daemon-reload')
         Util.RunShellCommand("systemctl daemon-reload")
 
         # Stop and start to restart any running services.

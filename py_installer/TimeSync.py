@@ -27,7 +27,7 @@ class TimeSync:
 
         # Ensure time servers are set in the config file.
         TimeSync._UpdateTimeSyncdConfig()
-
+             print('systemctl daemon-reload 2')
         # Reload and start the systemd service
         TimeSync._RunSystemCommand("sudo systemctl daemon-reload")
         TimeSync._RunSystemCommand("sudo systemctl enable systemd-timesyncd")
