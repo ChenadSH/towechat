@@ -25,7 +25,7 @@ class Logger:
     @staticmethod
     def InitFile(userHomePath:str, userName:str):
         try:
-            Logger.OutputFilePath = os.path.join(userHomePath, "octoeverywhere-installer.log")
+            Logger.OutputFilePath = os.path.join(userHomePath, "towechat-installer.log")
 
             # pylint: disable=consider-using-with
             Logger.OutputFile = open(Logger.OutputFilePath, "w", encoding="utf-8")
@@ -53,7 +53,7 @@ class Logger:
     @staticmethod
     def GetPyLogger() -> logging.Logger:
         if Logger.PyLogger is None:
-            Logger.PyLogger = logging.getLogger("octoeverywhere-installer")
+            Logger.PyLogger = logging.getLogger("towechat-installer")
             Logger.PyLogger.setLevel(logging.DEBUG)
             Logger.PyLogger.addHandler(CustomLogHandler())
         return Logger.PyLogger

@@ -37,6 +37,7 @@ class Discovery:
 
         # If we are here, we either have no service file name but a config path, or neither.
         pairList = []
+        print(context.OsType)
         if context.OsType == OsTypes.SonicPad:
             # For the Sonic Pad, we know exactly where the files are, so we don't need to do a lot of searching.
             pairList = self._SonicPadFindAllServiceFilesAndPairings(context)
@@ -126,6 +127,7 @@ class Discovery:
         for f in serviceFiles:
             # Try to find a matching moonraker config file, based off the service file.
             moonrakerConfigPath = self._TryToFindMatchingMoonrakerConfig(f)
+            print(moonrakerConfigPath)
             if moonrakerConfigPath is None:
                 Logger.Debug(f"Moonraker config file not found for service file [{f}]")
                 try:
