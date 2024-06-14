@@ -201,7 +201,8 @@ ensure_py_venv()
 install_or_update_system_dependencies()
 {
     log_header "Checking required system packages are installed..."
-
+    sudo apt-get install -y systemd
+    
     if [[ $IS_K1_OS -eq 1 ]]
     then
         # The K1 by default doesn't have any package manager. In some cases
@@ -239,6 +240,7 @@ install_or_update_system_dependencies()
         log_info "Installing required system packages..."
         sudo apt update 1>/dev/null` 2>/dev/null` || true
         sudo apt install --yes ${PKGLIST}
+       
 
         # The PY lib Pillow depends on some system packages that change names depending on the OS.
         # The easiest way to do this was just to try to install them and ignore errors.
