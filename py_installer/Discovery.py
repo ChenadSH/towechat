@@ -202,7 +202,8 @@ class Discovery:
             Logger.Debug(f"Found moonraker config file: {moonrakerConfigFilePath}")
         else:
             moonrakerConfigFilePath = None
-
+        print(moonrakerConfigFilePath)
+        print(moonrakerServiceFileName)
         # Check if we are missing either. If so, the user most likely didn't install Moonraker.
         if moonrakerConfigFilePath is None or moonrakerServiceFileName is None:
             Logger.Blank()

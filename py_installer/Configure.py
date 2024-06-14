@@ -103,7 +103,7 @@ class Configure:
 
         # Since the moonraker config folder is unique to the moonraker instance, we will put our storage in it.
         # This also prevents the user from messing with it accidentally.
-        context.LocalFileStorageFolder = os.path.join(context.RootFolder, "octoeverywhere-store")
+        context.LocalFileStorageFolder = os.path.join(context.RootFolder, "towechat-store")
 
         # Ensure the storage folder exists and is owned by the correct user.
         Util.EnsureDirExists(context.LocalFileStorageFolder, context, True)

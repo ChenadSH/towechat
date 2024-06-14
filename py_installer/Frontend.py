@@ -209,6 +209,7 @@ class Frontend:
         # We can't scan all ports, it will take to long. Instead we will scan known ports used by known common setups.
         # Note these ports are in order of importance, where ports near the top are more likely to be what the user wants.
         knownFrontendPorts = [
+            8080, # On the Debian mailsial
             4408, # On the K1, this is the Fluidd port. (This is set by the install script from GitHub Guilouz/Creality-K1-and-K1-Max)
             4409, # On the K1, this is the mainsail port. (This is set by the install script from GitHub Guilouz/Creality-K1-and-K1-Max)
             80,   # On most devices, this is the port the frontend is on. But note on the K1, this is Creality's own special frontend, most users don't want.

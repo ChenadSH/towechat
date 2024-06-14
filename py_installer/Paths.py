@@ -7,7 +7,7 @@ class Paths:
     
     # For Debian /printer/printer_data/config
     # DebianSystemdServiceFilePath = "/printer/kiauh"
-    DebianSystemdServiceFilePath = "/printer"
+    DebianSystemdServiceFilePath = "/printer/printer_data/config"
     
     # For the Creality OS, the service path is different.
     # The OS is based on WRT, so it's not Debian.
