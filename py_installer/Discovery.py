@@ -47,7 +47,7 @@ class Discovery:
         elif context.OsType == OsTypes.Debian:
             # For the Debian
             print('device is Debian')
-            pairList = self._FindDebianServiceFilesAndPairings()
+            pairList = self._FindDebianServiceFilesAndPairings(context)
         else:
             # To start, we will enumerate all moonraker service files we can find and their possible moonraker config parings.
             # For details about why we need these, read the readme.py file in this module.
@@ -119,34 +119,7 @@ class Discovery:
         return
 
 
-    # Note this must return the same result list as _CrealityOsFindAllServiceFilesAndPairings
-    def _FindDebianServiceFilesAndPairings(self) -> list:
-        # Look for any service file that matches moonraker*.service.
-        # For simple installs, there will be one file called moonraker.service.
-        # For more complex setups, we assume it will use the kiauh naming system, of moonraker-<name or number>.service
-        serviceFiles = self._FindAllFiles(Paths.DebianSystemdServiceFilePath, "moonraker", ".service")
-
-        # Based on the possible service files, see what moonraker config files we can match.
-        results = []
-        for f in serviceFiles:
-            # Try to find a matching moonraker config file, based off the service file.
-            moonrakerConfigPath = self._TryToFindMatchingMoonrakerConfig(f)
-            print(moonrakerConfigPath)
-            if moonrakerConfigPath is None:
-                Logger.Debug(f"Moonraker config file not found for service file [{f}]")
-                try:
-                    with open(f, "r", encoding="utf-8") as serviceFile:
-                        lines = serviceFile.readlines()
-                        for l in lines:
-                            Logger.Debug(l)
-                except Exception:
-                    pass
-            else:
-                Logger.Debug(f"Moonraker service [{f}] matched to [{moonrakerConfigPath}]")
-                # Only return fully matched pairs
-                # Pair the service file and the moonraker config file path.
-                results.append(ServiceFileConfigPathPair(os.path.basename(f), moonrakerConfigPath))
-        return results
+    
     # Note this must return the same result list as _CrealityOsFindAllServiceFilesAndPairings
     def _FindAllServiceFilesAndPairings(self) -> list:
         # Look for any service file that matches moonraker*.service.
@@ -205,6 +178,51 @@ class Discovery:
         return results
 
 
+    # A special function for K1 and K1 max installs.
+    # Note this must return the same result list as _FindAllServiceFilesAndPairings
+    def _FindDebianServiceFilesAndPairings(self, context:Context):
+
+        # The K1 doesn't have moonraker by default, but most users use a 3rd party script to install it.
+        # For now we will just assume the setup that the script produces.
+        moonrakerServiceFileName = None
+        moonrakerConfigFilePath = None
+
+        # The service file should be something like this "/etc/init.d/S56moonraker_service"
+        for fileOrDirName in os.listdir(Paths.DebianSystemdServiceFilePath):
+            fullFileOrDirPath = os.path.join(Paths.DebianSystemdServiceFilePath, fileOrDirName)
+            if os.path.isfile(fullFileOrDirPath) and os.path.islink(fullFileOrDirPath) is False:
+                if "moonraker" in fileOrDirName.lower():
+                    Logger.Debug(f"Found service file: {fullFileOrDirPath}")
+                    moonrakerServiceFileName = fileOrDirName
+                    break
+
+        # The moonraker config file should be here: "/usr/data/printer_data/config/moonraker.conf"
+        moonrakerConfigFilePath = "/printer/printer_data/config/moonraker.conf"
+        if os.path.isfile(moonrakerConfigFilePath):
+            Logger.Debug(f"Found moonraker config file: {moonrakerConfigFilePath}")
+        else:
+            moonrakerConfigFilePath = None
+
+        # Check if we are missing either. If so, the user most likely didn't install Moonraker.
+        if moonrakerConfigFilePath is None or moonrakerServiceFileName is None:
+            Logger.Blank()
+            Logger.Blank()
+            Logger.Blank()
+            Logger.Header("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            Logger.Error( "                               Moonraker Not Found!                                 ")
+            Logger.Warn(  "   The K1 and K1 Max don't have Moonraker or a web frontend installed by default.   ")
+            Logger.Warn(  "  Moonraker and a frontend like Fluidd or Mainsail are required for OctoEverywhere. ")
+            Logger.Blank()
+            Logger.Purple("        We have a step-by-step tutorial on how to install them in 30 seconds.       ")
+            Logger.Purple("                         Follow this link: https://oe.ink/s/k1                      ")
+            Logger.Blank()
+            Logger.Header("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            Logger.Blank()
+            Logger.Blank()
+            Logger.Blank()
+            raise Exception("Moonraker isn't installed on this K1 or K1 Max. Use the guide on this link to install it: https://oe.ink/s/k1")
+
+        return [ ServiceFileConfigPathPair(moonrakerServiceFileName, moonrakerConfigFilePath) ]
     # A special function for K1 and K1 max installs.
     # Note this must return the same result list as _FindAllServiceFilesAndPairings
     def _K1FindAllServiceFilesAndPairings(self, context:Context):

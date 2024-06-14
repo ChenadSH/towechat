@@ -5,7 +5,7 @@ class Paths:
     # The systemd path where we expect to find moonraker service files AND where we will put our service file.
     SystemdServiceFilePath = "/etc/systemd/system"
     
-    # For Debian
+    # For Debian /printer/printer_data/config
     # DebianSystemdServiceFilePath = "/printer/kiauh"
     DebianSystemdServiceFilePath = "/printer"
     
