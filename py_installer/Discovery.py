@@ -47,7 +47,7 @@ class Discovery:
         elif context.OsType == OsTypes.Debian:
             # For the Debian
             print('device is Debian')
-            pairList = self._FindDebianServiceFilesAndPairings(context)
+            pairList = self._FindDebianServiceFilesAndPairings()
         else:
             # To start, we will enumerate all moonraker service files we can find and their possible moonraker config parings.
             # For details about why we need these, read the readme.py file in this module.
