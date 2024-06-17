@@ -201,8 +201,7 @@ ensure_py_venv()
 install_or_update_system_dependencies()
 {
     log_header "Checking required system packages are installed..."
-    sudo apt-get install -y systemd
-    
+
     if [[ $IS_K1_OS -eq 1 ]]
     then
         # The K1 by default doesn't have any package manager. In some cases
