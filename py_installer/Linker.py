@@ -160,7 +160,7 @@ class Linker:
     def GetPrinterIdFromServiceSecretsConfigFile(context:Context) -> str or None:
         # This path and name must stay in sync with where the plugin will write the file.
         oeServiceConfigFilePath = os.path.join(context.LocalFileStorageFolder, "towechat.secrets")
-        print(oeServiceConfigFilePath)
+        # print(oeServiceConfigFilePath)
         # Check if there is a file. If not, it means the service hasn't been run yet and this is a first time setup.
         if os.path.exists(oeServiceConfigFilePath) is False:
             return None

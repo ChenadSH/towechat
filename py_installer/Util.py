@@ -51,6 +51,9 @@ class Util:
     def SetFileOwnerRecursive(dirOrFilePath:str, userName:str):
         uid = pwd.getpwnam(userName).pw_uid
         gid = pwd.getpwnam(userName).pw_gid
+        print('SetFileOwnerRecursive')
+        print(uid)
+        print(gid)
         # pylint: disable=no-member # Linux only
         os.chown(dirOrFilePath, uid, gid)
         # For file paths, this walk will do nothing
