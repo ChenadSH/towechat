@@ -52,6 +52,7 @@ class Discovery:
         else:
             # To start, we will enumerate all moonraker service files we can find and their possible moonraker config parings.
             # For details about why we need these, read the readme.py file in this module.
+            print('device is other os')
             pairList = self._FindAllServiceFilesAndPairings()
 
         # Ensure we found something.
