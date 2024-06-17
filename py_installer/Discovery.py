@@ -45,10 +45,10 @@ class Discovery:
             # For the K1 and K1 max, we know exactly where the files are, so we don't need to do a lot of searching.
             pairList = self._K1FindAllServiceFilesAndPairings(context)
         # for docker test 
-        # elif context.OsType == OsTypes.Debian:
-        #     # For the Debian
-        #     print('device is Debian')
-        #     pairList = self._FindDebianServiceFilesAndPairings(context)
+        elif context.OsType == OsTypes.Debian and os.path.exists('/.dockerenv'):
+            # For the Debian
+            print('device is Debian')
+            pairList = self._FindDebianServiceFilesAndPairings(context)
         else:
             # To start, we will enumerate all moonraker service files we can find and their possible moonraker config parings.
             # For details about why we need these, read the readme.py file in this module.
