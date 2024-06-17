@@ -44,10 +44,10 @@ class Discovery:
         elif context.OsType == OsTypes.K1:
             # For the K1 and K1 max, we know exactly where the files are, so we don't need to do a lot of searching.
             pairList = self._K1FindAllServiceFilesAndPairings(context)
-        elif context.OsType == OsTypes.Debian:
-            # For the Debian
-            print('device is Debian')
-            pairList = self._FindDebianServiceFilesAndPairings(context)
+        # elif context.OsType == OsTypes.Debian:
+        #     # For the Debian
+        #     print('device is Debian')
+        #     pairList = self._FindDebianServiceFilesAndPairings(context)
         else:
             # To start, we will enumerate all moonraker service files we can find and their possible moonraker config parings.
             # For details about why we need these, read the readme.py file in this module.
@@ -197,7 +197,7 @@ class Discovery:
                     break
 
         # The moonraker config file should be here: "/usr/data/printer_data/config/moonraker.conf"
-        moonrakerConfigFilePath = "~/printer_data/config/moonraker.conf"
+        moonrakerConfigFilePath = "/printer/printer_data/config/moonraker.conf"
         if os.path.isfile(moonrakerConfigFilePath):
             Logger.Debug(f"Found moonraker config file: {moonrakerConfigFilePath}")
         else:
