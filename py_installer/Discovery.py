@@ -197,7 +197,7 @@ class Discovery:
                     break
 
         # The moonraker config file should be here: "/usr/data/printer_data/config/moonraker.conf"
-        moonrakerConfigFilePath = "/printer/printer_data/config/moonraker.conf"
+        moonrakerConfigFilePath = "~/printer_data/config/moonraker.conf"
         if os.path.isfile(moonrakerConfigFilePath):
             Logger.Debug(f"Found moonraker config file: {moonrakerConfigFilePath}")
         else:
