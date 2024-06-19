@@ -285,6 +285,41 @@ install_or_update_python_env()
     log_info "Python libs installed."
 }
 
+#
+# Logic to ensure the user isn't trying to use this script to setup in OctoPrint.
+#
+check_for_octoprint()
+{
+    if [[ $IS_SONIC_PAD_OS -eq 1 ]] || [[ $IS_K1_OS -eq 1 ]]
+    then
+        # Skip, there's no need and we don't have curl.
+        return
+    else
+        # Check if we are running in the Bambu Connect or Companion mode, if so, don't do this since
+        # The device could be running OctoPrint and that's fine.
+        if [[ "$*" == *"-bambu"* ]] || [[ "$*" == *"-companion"* ]]
+        then
+            return
+        fi
+
+        # Do a basic check to see if OctoPrint is running on the standard port.
+        # This obviously doesn't work for all OctoPrint setups, but it works for the default ones.
+        if curl -s "http://127.0.0.1:5000" >/dev/null ; then
+            log_important "Just a second... OctoPrint was detected!"
+            log_blank
+            log_important "This install script is used to install OctoEverywhere for Mainsail, Fluidd, Moonraker, etc."
+            log_important "If you want to install OctoEverywhere for OctoPrint, you need to use OctoPrint's Plugin Manager, found in OctoPrint's web settings UI."
+            log_blank
+            read -p       "Do you want to continue this setup for Mainsail, Fluidd, Moonraker, etc? [y/n]: " -e result
+            log_blank
+            if [ "${result^^}" != "Y" ] ; then
+                log_info "Stopping install process."
+                exit 0
+            fi
+        fi
+    fi
+}
+
 
 # These are helpful for debugging.
 if [[ $IS_SONIC_PAD_OS -eq 1 ]]
@@ -305,6 +340,10 @@ ensure_creality_os_right_repo_path
 # Next, make sure our required system packages are installed.
 # These are required for other actions in this script, so it must be done first.
 install_or_update_system_dependencies
+
+# Check that OctoPrint isn't found. If it is, we want to check with the user to make sure they are
+# not trying to setup OE for OctoPrint.
+check_for_octoprint $*
 
 # Now make sure the virtual env exists, is updated, and all of our currently required PY packages are updated.
 install_or_update_python_env
@@ -338,11 +377,14 @@ cd ${OE_REPO_DIR} > /dev/null
 # Disable the PY cache files (-B), since they will be written as sudo, since that's what we launch the PY
 # installer as. The PY installer must be sudo to write the service files, but we don't want the
 # complied files to stay in the repo with sudo permissions.
+
 if [[ $IS_SONIC_PAD_OS -eq 1 ]] || [[ $IS_K1_OS -eq 1 ]]
 then
+    ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere ${PY_LAUNCH_JSON}
     # Creality OS only has a root user and we can't use sudo.
     ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
 else
+    sudo ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere ${PY_LAUNCH_JSON}
     sudo ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
 fi
 
