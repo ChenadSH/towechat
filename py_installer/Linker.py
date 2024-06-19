@@ -164,6 +164,7 @@ class Linker:
         # print(oeServiceConfigFilePath)
         # Check if there is a file. If not, it means the service hasn't been run yet and this is a first time setup.
         if os.path.exists(oeServiceConfigFilePath) is False:
+            print('path fail')
             return None
 
         # If the file exists, try to read it.
