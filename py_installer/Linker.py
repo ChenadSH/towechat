@@ -11,7 +11,7 @@ from .Context import Context
 # and if not helping the user link their printer.
 class Linker:
 
-    c_MinPrinterIdLength = 40
+    c_MinPrinterIdLength = 4
 
     def Run(self, context:Context):
 
@@ -170,6 +170,7 @@ class Linker:
         # If the file exists, try to read it.
         # If this fails, let it throw, so the user knows something is wrong.
         Logger.Debug("Found existing OctoEverywhere service secrets config.")
+        print("Found existing OctoEverywhere service secrets config.")
         try:
             config = configparser.ConfigParser(allow_no_value=True, strict=False)
             config.read(oeServiceConfigFilePath)
@@ -183,6 +184,7 @@ class Linker:
         # Print the raw config file for debugging issues with the config.
         try:
             with open(oeServiceConfigFilePath, 'r', encoding="utf-8") as f:
+                print(f.read())
                 Logger.Debug("Service secrets config contents:"+f.read())
         except Exception:
             pass
