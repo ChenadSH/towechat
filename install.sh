@@ -44,6 +44,9 @@ OE_REPO_DIR=$(readlink -f $(dirname "$0"))
 OE_ENV="${HOME}/towechat-env"
 
 
+
+
+
 # Note that this is parsed by the update process to find and update required system packages on update!
 # On update THIS SCRIPT ISN'T RAN, only this line is parsed out and used to install / update system packages.
 # For python packages, the `requirements.txt` package is used on update.
@@ -380,11 +383,11 @@ cd ${OE_REPO_DIR} > /dev/null
 
 if [[ $IS_SONIC_PAD_OS -eq 1 ]] || [[ $IS_K1_OS -eq 1 ]]
 then
-    ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere ${PY_LAUNCH_JSON}
+    ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere
     # Creality OS only has a root user and we can't use sudo.
     ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
 else
-    sudo ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere ${PY_LAUNCH_JSON}
+    sudo ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere
     sudo ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
 fi
 
