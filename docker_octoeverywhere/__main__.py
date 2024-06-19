@@ -19,6 +19,7 @@ from linux_host.config import Config
 # pylint: disable=logging-fstring-interpolation
 
 if __name__ == '__main__':
+
     # Setup a basic logger
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -57,13 +58,9 @@ if __name__ == '__main__':
     try:
         # First, read the required env vars that are set in the dockerfile.
         logger.info(f"Env Vars: {os.environ}")
-        # virtualEnvPath = EnsureIsPath(os.environ.get("VENV_DIR", None))
-        # repoRootPath = EnsureIsPath(os.environ.get("REPO_DIR", None))
-        # dataPath = EnsureIsPath(os.environ.get("DATA_DIR", None))
-        print(os.environ.get("OE_ENV", None))
-        virtualEnvPath = EnsureIsPath(os.environ.get("OE_ENV", None))
-        repoRootPath = EnsureIsPath(os.environ.get("OE_REPO_DIR", None))
-        dataPath = EnsureIsPath(os.environ.get("USER_HOME", None))
+        virtualEnvPath = EnsureIsPath(os.environ.get("VENV_DIR", None))
+        repoRootPath = EnsureIsPath(os.environ.get("REPO_DIR", None))
+        dataPath = EnsureIsPath(os.environ.get("DATA_DIR", None))
 
         # For Bambu Connect, the config sits int the data dir.
         configPath = dataPath

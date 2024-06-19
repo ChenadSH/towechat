@@ -383,11 +383,9 @@ cd ${OE_REPO_DIR} > /dev/null
 
 if [[ $IS_SONIC_PAD_OS -eq 1 ]] || [[ $IS_K1_OS -eq 1 ]]
 then
-    ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere
     # Creality OS only has a root user and we can't use sudo.
     ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
 else
-    sudo ${OE_ENV}/bin/python3 -B -m docker_octoeverywhere
     sudo ${OE_ENV}/bin/python3 -B -m py_installer ${PY_LAUNCH_JSON}
 fi
 

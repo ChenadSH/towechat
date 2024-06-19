@@ -47,23 +47,23 @@ class Linker:
                     Util.PrintServiceLogsToConsole(context)
                     raise Exception("Failed to read printer id from service config file.")
 
-        # # Check if the printer is already connected to an account.
-        # # If so, report and we don't need to do the setup.
-        # (isConnectedToService, printerNameIfConnectedToAccount) = self._IsPrinterConnectedToAnAccount(printerId)
-        # if isConnectedToService and printerNameIfConnectedToAccount is not None:
-        #     Logger.Header("This printer is securely connected to your OctoEverywhere account as '"+str(printerNameIfConnectedToAccount)+"'")
-        #     return
+        # Check if the printer is already connected to an account.
+        # If so, report and we don't need to do the setup.
+        (isConnectedToService, printerNameIfConnectedToAccount) = self._IsPrinterConnectedToAnAccount(printerId)
+        if isConnectedToService and printerNameIfConnectedToAccount is not None:
+            Logger.Header("This printer is securely connected to your OctoEverywhere account as '"+str(printerNameIfConnectedToAccount)+"'")
+            return
 
-        # # The printer isn't connected to an account.
-        # # If this is not the first time setup, ask the user if they want to do it now.
-        # if context.ExistingPrinterId is not None:
-        #     Logger.Blank()
-        #     Logger.Warn("This printer isn't connected to an OctoEverywhere account.")
-        #     if Util.AskYesOrNoQuestion("Would you like to link it now?") is False:
-        #         Logger.Blank()
-        #         Logger.Header("You can connect this printer anytime, using this URL: ")
-        #         Logger.Warn(self._GetAddPrinterUrl(printerId))
-        #         return
+        # The printer isn't connected to an account.
+        # If this is not the first time setup, ask the user if they want to do it now.
+        if context.ExistingPrinterId is not None:
+            Logger.Blank()
+            Logger.Warn("This printer isn't connected to an OctoEverywhere account.")
+            if Util.AskYesOrNoQuestion("Would you like to link it now?") is False:
+                Logger.Blank()
+                Logger.Header("You can connect this printer anytime, using this URL: ")
+                Logger.Warn(self._GetAddPrinterUrl(printerId))
+                return
 
         # Help the user setup the printer!
         Logger.Blank()
@@ -161,12 +161,12 @@ class Linker:
     def GetPrinterIdFromServiceSecretsConfigFile(context:Context) -> str or None:
         # This path and name must stay in sync with where the plugin will write the file.
         oeServiceConfigFilePath = os.path.join(context.LocalFileStorageFolder, "towechat.secrets")
-        # print(oeServiceConfigFilePath)
+        # 
         # Check if there is a file. If not, it means the service hasn't been run yet and this is a first time setup.
         if os.path.exists(oeServiceConfigFilePath) is False:
             print('path fail')
             return None
-
+        
         # If the file exists, try to read it.
         # If this fails, let it throw, so the user knows something is wrong.
         Logger.Debug("Found existing OctoEverywhere service secrets config.")
