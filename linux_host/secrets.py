@@ -27,7 +27,7 @@ class Secrets:
         self.Logger = logger
 
         # Note this path and name MUST STAY THE SAME because the installer PY script looks for this file.
-        self.SecretFilePath = os.path.join(octoeverywhereStoragePath, "octoeverywhere.secrets")
+        self.SecretFilePath = os.path.join(octoeverywhereStoragePath, "towechat.secrets")
 
         # A lock to keep file access super safe
         self.ConfigLock = threading.Lock()
