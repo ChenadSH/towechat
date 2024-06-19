@@ -14,6 +14,7 @@ class MoonrakerConnector:
 
     def EnsureCompanionMoonrakerConnection(self, context:Context):
         Logger.Debug("Running companion ensure config logic.")
+        print("Running companion ensure config logic.")
 
         # See if there's a valid config already.
         ip, port = ConfigHelper.TryToGetCompanionDetails(context)
@@ -140,6 +141,7 @@ class MoonrakerConnector:
         # Setup the callback functions
         def OnOpened(ws):
             Logger.Debug(f"Test [{url}] - WS Opened")
+            print(f"Test [{url}] - WS Opened")
         def OnMsg(ws, msg):
             with lock:
                 if "success" in result:
@@ -150,14 +152,17 @@ class MoonrakerConnector:
                     Logger.Debug(f"Test [{url}] - WS message `{msgStr}`")
                     if "moonraker" in msgStr.lower():
                         Logger.Debug(f"Test [{url}] - Found Moonraker message, success!")
+                        print(f"Test [{url}] - Found Moonraker message, success!")
                         result["success"] = True
                         doneEvent.set()
                 except Exception:
                     pass
         def OnClosed(ws):
             Logger.Debug(f"Test [{url}] - Closed")
+            print(f"Test [{url}] - Closed")
             doneEvent.set()
         def OnError(ws, exception):
+            print(f"Test [{url}] - Error: {str(exception)}")
             Logger.Debug(f"Test [{url}] - Error: {str(exception)}")
             with lock:
                 result["exception"] = exception
@@ -165,6 +170,7 @@ class MoonrakerConnector:
 
         # Create the websocket
         Logger.Debug(f"Checking for moonraker using the address: `{url}`")
+        print(f"Checking for moonraker using the address: `{url}`")
         try:
             with Client(url, onWsOpen=OnOpened, onWsMsg=OnMsg, onWsError=OnError, onWsClose=OnClosed) as ws:
                 ws.RunAsync()
