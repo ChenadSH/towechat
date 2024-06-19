@@ -105,6 +105,7 @@ class Secrets:
             if self.Config.has_section(section):
                 if key in self.Config[section].keys():
                     return self.Config[section][key]
+        print('_GetStr none')
         return None
 
 
@@ -129,9 +130,10 @@ class Secrets:
 
 
     def _LoadConfigIfNeeded_UnderLock(self, forceRead = False) -> None:
+        print("_LoadConfigIfNeeded_UnderLock")
         if self.Config is not None and forceRead is False:
             return
-
+        print('is ok')
         # Always create a new object.
         # For our config, we use strict and such, so we know the config is valid.
         self.Config = configparser.ConfigParser()
