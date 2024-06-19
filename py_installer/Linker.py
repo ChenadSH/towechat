@@ -216,33 +216,33 @@ class Linker:
         attempt = 0
         while True:
             try:
-                # Keep track of attempts and timeout if there have been too many.
-                attempt += 1
-                if attempt > 5:
-                    Logger.Error(f"Failed to query current printer info from service after {attempt} attempts.")
-                    return (False, None)
+                # # Keep track of attempts and timeout if there have been too many.
+                # attempt += 1
+                # if attempt > 5:
+                #     Logger.Error(f"Failed to query current printer info from service after {attempt} attempts.")
+                #     return (False, None)
 
-                # Query the printer status.
-                r = requests.post('https://octoeverywhere.com/api/printer/info', json={"Id": printerId}, timeout=20)
+                # # Query the printer status.
+                # r = requests.post('https://octoeverywhere.com/api/printer/info', json={"Id": printerId}, timeout=20)
 
-                Logger.Debug("OE Printer info API Result: "+str(r.status_code))
-                # If the status code is above 500, retry.
-                if r.status_code >= 500:
-                    raise Exception(f"Failed call with status code {r.status_code}")
+                # Logger.Debug("OE Printer info API Result: "+str(r.status_code))
+                # # If the status code is above 500, retry.
+                # if r.status_code >= 500:
+                #     raise Exception(f"Failed call with status code {r.status_code}")
 
-                # Anything else we report as not connected.
-                if r.status_code != 200:
-                    return (False, None)
+                # # Anything else we report as not connected.
+                # if r.status_code != 200:
+                #     return (False, None)
 
-                # On success, try to parse the response and see if it's connected.
-                jResult = r.json()
-                Logger.Debug("OE Printer API info; Name:"+jResult["Result"]["Name"] + " HasOwners:" +str(jResult["Result"]["HasOwners"]))
+                # # On success, try to parse the response and see if it's connected.
+                # jResult = r.json()
+                # Logger.Debug("OE Printer API info; Name:"+jResult["Result"]["Name"] + " HasOwners:" +str(jResult["Result"]["HasOwners"]))
 
-                # Only return the name if there the printer is linked to an account.
-                printerName = None
-                if jResult["Result"]["HasOwners"] is True:
-                    printerName = jResult["Result"]["Name"]
-                return (True, printerName)
+                # # Only return the name if there the printer is linked to an account.
+                # printerName = None
+                # if jResult["Result"]["HasOwners"] is True:
+                #     printerName = jResult["Result"]["Name"]
+                return (True, "printerName-towechat")
             except Exception:
                 Logger.Warn("Failed to get printer info from service, trying again in just a second...")
                 time.sleep(2.0 * attempt)
