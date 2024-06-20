@@ -154,6 +154,7 @@ class Linker:
 
         Logger.Warn("Use this URL to securely link this printer to your OctoEverywhere account:")
         Logger.Header(self._GetAddPrinterUrl(printerId))
+        return
 
 
     # Get's the printer id from the instances secrets config file, if the config exists.
