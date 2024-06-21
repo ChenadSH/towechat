@@ -25,8 +25,9 @@ class Linker:
 
             # Try to get the printer id from the secrets config file
             printerId = Linker.GetPrinterIdFromServiceSecretsConfigFile(context)
-            # print("printerId is :")
-            # print(printerId)
+            Logger.Blank()
+            Logger.Header("printerId is :"+printerId)
+            Logger.Blank()
             # If we failed, try to handle the case where the service might be having an error.
             if printerId is None:
                 timeDelta = time.time() - startTimeSec

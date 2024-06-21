@@ -495,6 +495,7 @@ class MoonrakerClient:
 
     def _WebSocketWorkerThread(self):
         self.Logger.info("Moonraker client starting websocket connection thread.")
+        print("Moonraker client starting websocket connection thread.")
         while True:
             try:
                 # Every time we connect, call the function to update the host and port if required.

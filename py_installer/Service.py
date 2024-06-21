@@ -49,6 +49,7 @@ class Service:
 
         # Base on the OS type, install the service differently
         if context.OsType == OsTypes.Debian:
+            print(moduleNameToRun)
             self._InstallDebian(context, argsJsonBase64, moduleNameToRun)
         elif context.OsType == OsTypes.SonicPad:
             self._InstallSonicPad(context, argsJsonBase64, moduleNameToRun)

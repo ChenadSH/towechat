@@ -7,7 +7,7 @@ from linux_host.startup import ConfigDataTypes
 from .moonrakerhost import MoonrakerHost
 
 if __name__ == '__main__':
-
+    print('startup moonraker_octoeverywhere')
     # This is a helper class, to keep the startup logic common.
     s = Startup()
 
@@ -59,6 +59,7 @@ if __name__ == '__main__':
     # Run!
     try:
         # Create and run the main host!
+        print("Create and run the main host!")
         host = MoonrakerHost(KlipperConfigFolder, KlipperLogFolder, devConfig_CanBeNone)
         host.RunBlocking(KlipperConfigFolder, IsCompanion, LocalFileStoragePath, ServiceName, VirtualEnvPath, RepoRootFolder,
                         MoonrakerConfigFile, devConfig_CanBeNone)

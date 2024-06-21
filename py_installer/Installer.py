@@ -156,9 +156,9 @@ class Installer:
         permissions.EnsureFinalPermissions(context)
 
         # We are fully configured, create the service file and it's dependent files.
+        print("Service start")
         service = Service()
         service.Install(context)
-
         # Add our auto update logic.
         updater = Updater()
         # If this is an companion or a Creality OS install, put the update script in the users root, so it's easy to find.

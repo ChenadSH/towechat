@@ -130,7 +130,7 @@ cd $startingDir
             # Make sure to make it executable
             st = os.stat(updateFilePath)
             os.chmod(updateFilePath, st.st_mode | stat.S_IEXEC)
-
+            
             # Ensure the user who launched the installer script has permissions to run it.
             Util.SetFileOwnerRecursive(updateFilePath, context.UserName)
 
