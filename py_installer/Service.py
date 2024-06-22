@@ -16,6 +16,7 @@ class Service:
 
         # We always re-write the service file, to make sure it's current.
         if os.path.exists(context.ServiceFilePath):
+            print(context.ServiceFilePath)
             Logger.Info("Service file already exists, recreating.")
 
         # Create the service file.
@@ -49,7 +50,7 @@ class Service:
 
         # Base on the OS type, install the service differently
         if context.OsType == OsTypes.Debian:
-            print(moduleNameToRun)
+            print("Service init Debian:"+moduleNameToRun)
             self._InstallDebian(context, argsJsonBase64, moduleNameToRun)
         elif context.OsType == OsTypes.SonicPad:
             self._InstallSonicPad(context, argsJsonBase64, moduleNameToRun)
@@ -63,6 +64,7 @@ class Service:
     def _InstallDebian(self, context:Context, argsJsonBase64:str, moduleNameToRun:str):
         serviceName = "Bambu Lab Printers" if context.IsBambuSetup else "Moonraker"
         optionalAfter = "" if context.IsBambuSetup else "moonraker.service"
+        print("_InstallDebian:"+optionalAfter)
         s = f'''\
     # OctoEverywhere For {serviceName}
     [Unit]
@@ -83,14 +85,17 @@ class Service:
     # Since we will only restart on a fatal Logger.Error, set the restart time to be a bit higher, so we don't spin and spam.
     RestartSec=10
 '''
+        
         if context.SkipSudoActions:
             Logger.Warn("Skipping service file creation, registration, and starting due to skip sudo actions flag.")
             return
-
+        
         Logger.Debug("Service config file contents to write: "+s)
         Logger.Info("Creating service file "+context.ServiceFilePath+"...")
         with open(context.ServiceFilePath, "w", encoding="utf-8") as serviceFile:
             serviceFile.write(s)
+            print('write success')
+            print(s)
 
         Logger.Info("Registering service...")
         Util.RunShellCommand("systemctl enable "+context.ServiceName)
