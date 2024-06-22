@@ -44,7 +44,7 @@ class Service:
         # We have to convert to bytes -> encode -> back to string.
         argsJson = json.dumps(args)
         argsJsonBase64 = base64.urlsafe_b64encode(bytes(argsJson, "utf-8")).decode("utf-8")
-
+        print(args)
         # Get the correct module host for the service to run, based on the install type.
         moduleNameToRun = "bambu_octoeverywhere" if context.IsBambuSetup else "moonraker_octoeverywhere"
 
@@ -66,9 +66,9 @@ class Service:
         optionalAfter = "" if context.IsBambuSetup else "moonraker.service"
         print("_InstallDebian:"+optionalAfter)
         s = f'''\
-    # OctoEverywhere For {serviceName}
+    # towechat-OctoEverywhere For {serviceName}
     [Unit]
-    Description=OctoEverywhere For {serviceName}
+    Description=towechat-OctoEverywhere For {serviceName}
     # Start after network.
     After=network-online.target {optionalAfter}
 
@@ -81,6 +81,7 @@ class Service:
     User={context.UserName}
     WorkingDirectory={context.RepoRootFolder}
     ExecStart={context.VirtualEnvPath}/bin/python3 -m {moduleNameToRun} "{argsJsonBase64}"
+    echo -e "${context.UserName}$1${context.RepoRootFolder}"
     Restart=always
     # Since we will only restart on a fatal Logger.Error, set the restart time to be a bit higher, so we don't spin and spam.
     RestartSec=10
